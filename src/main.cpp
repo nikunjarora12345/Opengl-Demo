@@ -162,7 +162,7 @@ int main() {
         float lightIntensity = 1.0f;
         float specularIntensity = 1.0f;
 
-        glm::vec3 translation(0.0f, 0.0f, -1.0f);
+        glm::vec3 translation(0.0f, 0.0f, 0.0f);
         glm::vec3 rotation(0.0f, 0.0f, 0.0f);
         glm::vec3 scale(1.0f, 1.0f, 1.0f);
 
@@ -257,13 +257,13 @@ int main() {
                 1000.0f
             );
             glm::mat4 model(1);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
 
+            model = glm::translate(model, translation); // translation
             model = 
                 glm::rotate(model, glm::radians(rotation.x), glm::vec3(1, 0, 0))
                 * glm::rotate(model, glm::radians(rotation.y), glm::vec3(0, 1, 0))
                 * glm::rotate(model, glm::radians(rotation.z), glm::vec3(0, 0, 1)); // rotation
-            model = glm::translate(model, translation); // translation
             model = glm::scale(model, scale); // scale
 
             shader.SetUniformMat4f("u_Model", model);
