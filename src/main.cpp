@@ -76,25 +76,37 @@ int main() {
 
     // OpenGL scope. Made for cleaning up the buffers before glfw terminates.
     {
-        Loader::ObjLoader obj("res/models/cube.obj");
-        std::vector<float> vertex = obj.GetVertexData();
-        float* vertices = vertex.data();
+        Loader::ObjLoader obj1("res/models/suzanne.obj");
+        std::vector<float> vertex1 = obj1.GetVertexData();
+        float* vertices1 = vertex1.data();
+
+        Loader::ObjLoader obj2("res/models/cube.obj");
+        std::vector<float> vertex2 = obj2.GetVertexData();
+        float* vertices2 = vertex2.data();
+
+        Loader::ObjLoader obj3("res/models/cube.obj");
+        std::vector<float> vertex3 = obj3.GetVertexData();
+        float* vertices3 = vertex3.data();
 
         Renderer::Renderer renderer;
 
-        Renderer::VertexBuffer vb(vertices, vertex.size() * sizeof(float));
-        
-        Renderer::VertexArray va;
+        Renderer::VertexBuffer vb1(vertices1, vertex1.size() * sizeof(float));
+        Renderer::VertexBuffer vb2(vertices2, vertex2.size() * sizeof(float));
+        Renderer::VertexBuffer vb3(vertices3, vertex3.size() * sizeof(float));
+
         Renderer::VertexBufferLayout layout;
         layout.Push<float>(3); // position
         layout.Push<float>(2); // texture coords
         layout.Push<float>(3); // normals
-        va.AddBuffer(vb, layout);
+        
+        Renderer::VertexArray va1;
+        Renderer::VertexArray va2;
+        Renderer::VertexArray va3;
 
         Shader::Shader shader("res/Basic.glsl");
         shader.Bind();
 
-        Renderer::Texture texture("res/models/uvmap.png");
+        Renderer::Texture texture("res/models/mask.png");
         texture.Bind();
         shader.SetUniform1i("u_Texture", 0);
 
@@ -117,9 +129,26 @@ int main() {
         float lightIntensity = 1.0f;
         float specularIntensity = 1.0f;
 
-        glm::vec3 translation(0.0f, 0.0f, 0.0f);
-        glm::vec3 rotation(0.0f, 0.0f, 0.0f);
-        glm::vec3 scale(1.0f, 1.0f, 1.0f);
+        std::vector<glm::vec3> translation = { 
+            glm::vec3(0.0f, 0.0f, -1.0f), 
+            glm::vec3(0.5f, 0.0f, 0.0f), 
+            glm::vec3(-1.0f, 0.0f, 0.0f) 
+        };
+        std::vector<glm::vec3> rotation = {
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, 0.0f)
+        };
+        std::vector<glm::vec3> scale = {
+            glm::vec3(1.0f, 1.0f, 1.0f),
+            glm::vec3(1.0f, 1.0f, 1.0f),
+            glm::vec3(1.0f, 1.0f, 1.0f)
+        };
+
+        std::vector<glm::mat4> nodes = { glm::mat4(1), glm::mat4(1), glm::mat4(1) };
+
+        int currentNode = 0;
+        const char* items[] = { "Suzanne", "  Cube1", "    Cube2" };
 
         bool autoRotateX = false;
         bool autoRotateY = false;
@@ -142,10 +171,11 @@ int main() {
             ImGui::NewFrame();
 
             {
-                ImGui::Text("Cube Transform");
-                ImGui::InputFloat3("Translation", glm::value_ptr(translation), 1);
-                ImGui::InputFloat3("Rotation", glm::value_ptr(rotation), 1);
-                ImGui::InputFloat3("Scale", glm::value_ptr(scale), 1);
+                ImGui::ListBox("Node", &currentNode, items, 3);
+                ImGui::Text("Transform");
+                ImGui::InputFloat3("Translation", glm::value_ptr(translation[currentNode]), 1);
+                ImGui::InputFloat3("Rotation", glm::value_ptr(rotation[currentNode]), 1);
+                ImGui::InputFloat3("Scale", glm::value_ptr(scale[currentNode]), 1);
                 ImGui::Text("Auto Rotate Cube");
                 ImGui::Checkbox("X", &autoRotateX);
                 ImGui::SameLine(50);
@@ -181,23 +211,23 @@ int main() {
             }
 
             if (autoRotateX) {
-                rotation.x += 20 * deltaTime;
-                if (rotation.x >= 360) {
-                    rotation.x -= 360;
+                rotation[currentNode].x += 20 * deltaTime;
+                if (rotation[currentNode].x >= 360) {
+                    rotation[currentNode].x -= 360;
                 }
             }
 
             if (autoRotateY) {
-                rotation.y += 20 * deltaTime;
-                if (rotation.y >= 360) {
-                    rotation.y -= 360;
+                rotation[currentNode].y += 20 * deltaTime;
+                if (rotation[currentNode].y >= 360) {
+                    rotation[currentNode].y -= 360;
                 }
             }
 
             if (autoRotateZ) {
-                rotation.z += 20 * deltaTime;
-                if (rotation.z >= 360) {
-                    rotation.z -= 360;
+                rotation[currentNode].z += 20 * deltaTime;
+                if (rotation[currentNode].z >= 360) {
+                    rotation[currentNode].z -= 360;
                 }
             }
 
@@ -211,17 +241,29 @@ int main() {
                 0.1f, 
                 1000.0f
             );
-            glm::mat4 model(1);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
 
-            model = glm::translate(model, translation); // translation
-            model = 
-                glm::rotate(model, glm::radians(rotation.x), glm::vec3(1, 0, 0))
-                * glm::rotate(model, glm::radians(rotation.y), glm::vec3(0, 1, 0))
-                * glm::rotate(model, glm::radians(rotation.z), glm::vec3(0, 0, 1)); // rotation
-            model = glm::scale(model, scale); // scale
+            nodes[0] = glm::mat4(1);
+            nodes[0] = glm::translate(nodes[0], translation[0]);
 
-            shader.SetUniformMat4f("u_Model", model);
+            nodes[1] = glm::mat4(1);
+            nodes[1] = glm::translate(nodes[1], translation[1]);
+
+            nodes[2] = glm::mat4(1);
+            nodes[2] = glm::translate(nodes[2], translation[2]);
+
+            for (int i = 0; i < nodes.size(); i++) {
+                nodes[i] = glm::translate(nodes[i], translation[i]); // translation
+                nodes[i] =
+                    glm::rotate(nodes[i], glm::radians(rotation[i].x), glm::vec3(1, 0, 0))
+                    * glm::rotate(nodes[i], glm::radians(rotation[i].y), glm::vec3(0, 1, 0))
+                    * glm::rotate(nodes[i], glm::radians(rotation[i].z), glm::vec3(0, 0, 1)); // rotation
+                nodes[i] = glm::scale(nodes[i], scale[i]); // scale
+            }
+
+            // simulate heirarchy Suzanne -> Cube1 -> Cube2
+            nodes[1] = nodes[0] * nodes[1];
+            nodes[2] = nodes[1] * nodes[2];
+
             shader.SetUniformMat4f("u_View", view);
             shader.SetUniformMat4f("u_Projection", proj);
             shader.SetUniform3fv("u_CameraPos", camera.GetPosition());
@@ -235,8 +277,36 @@ int main() {
             shader.SetUniform1f("u_AmbientIntensity", ambientIntensity);
             shader.SetUniform1f("u_LightIntensity", lightIntensity);
             shader.SetUniform1f("u_SpecularIntensity", specularIntensity);
+            
+            {
+                shader.SetUniformMat4f("u_Model", nodes[0]);
 
-            renderer.Draw(va, shader, obj.vertices.size());
+                va1.AddBuffer(vb1, layout);
+                renderer.Draw(va1, shader, obj1.vertices.size());
+
+                va1.Unbind();
+                vb1.Unbind();
+            }
+
+            {
+                shader.SetUniformMat4f("u_Model", nodes[1]);
+
+                va2.AddBuffer(vb2, layout);
+                renderer.Draw(va2, shader, obj2.vertices.size());
+
+                va2.Unbind();
+                vb2.Unbind();
+            }
+
+            {
+                shader.SetUniformMat4f("u_Model", nodes[2]);
+
+                va3.AddBuffer(vb3, layout);
+                renderer.Draw(va3, shader, obj3.vertices.size());
+
+                va3.Unbind();
+                vb3.Unbind();
+            }
 
             // Render ImGui
             ImGui::Render();
