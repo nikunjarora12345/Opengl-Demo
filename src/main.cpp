@@ -19,6 +19,7 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 #include "Camera.hpp"
+#include "ObjLoader.hpp"
 
 constexpr unsigned screenWidth = 1366;
 constexpr unsigned screenHeight = 768;
@@ -75,59 +76,13 @@ int main() {
 
     // OpenGL scope. Made for cleaning up the buffers before glfw terminates.
     {
-        // Cube vertices with Position, Texture coords and Normal vectors
-        float vertices[] = {
-            // Front face (+z)
-            -1.0f, -1.0f, 1.0f, 0.0f, 2.0f / 3.0f, 0.0f, 0.0f, 1.0f,
-            1.0f, -1.0f, 1.0f, 1.0f / 3.0f, 2.0f / 3.0f, 0.0f, 0.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f / 3.0f, 3.0f / 3.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, 1.0f, 1.0f, 0.0f, 3.0f / 3.0f, 0.0f, 0.0f, 1.0f,
-            // Right face (+x)
-            1.0f, -1.0f, 1.0f, 1.0f / 3.0f, 2.0f / 3.0f, 1.0f, 0.0f, 0.0f,
-            1.0f, -1.0f, -1.0f, 2.0f / 3.0f, 2.0f / 3.0f, 1.0f, 0.0f, 0.0f,
-            1.0f, 1.0f, -1.0f, 2.0f / 3.0f, 3.0f / 3.0f, 1.0f, 0.0f, 0.0f,
-            1.0f, 1.0f, 1.0f, 1.0f / 3.0f, 3.0f / 3.0f, 1.0f, 0.0f, 0.0f,
-            // Bottom face (-y)
-            1.0f, -1.0f, 1.0f, 2.0f / 3.0f, 2.0f / 3.0f, 0.0f, -1.0f, 0.0f,
-            -1.0f, -1.0f, 1.0f, 3.0f / 3.0f, 2.0f / 3.0f, 0.0f, -1.0f, 0.0f,
-            -1.0f, -1.0f, -1.0f, 3.0f / 3.0f, 3.0f / 3.0f, 0.0f, -1.0f, 0.0f,
-            1.0f, -1.0f, -1.0f, 2.0f / 3.0f, 3.0f / 3.0f, 0.0f, -1.0f, 0.0f,
-            // Top face (+y)
-            -1.0f, 1.0f, 1.0f, 0.0f, 1.0f / 3.0f, 0.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, 1.0f, 1.0f / 3.0f, 1.0f / 3.0f, 0.0f, 1.0f, 0.0f,
-            1.0f, 1.0f, -1.0f, 1.0f / 3.0f, 2.0f / 3.0f, 0.0f, 1.0f, 0.0f,
-            -1.0f, 1.0f, -1.0f, 0.0f, 2.0f / 3.0f, 0.0f, 1.0f, 0.0f,
-            // Left face (-x)
-            -1.0f, -1.0f, -1.0f, 1.0f / 3.0f, 1.0f / 3.0f, -1.0f, 0.0f, 0.0f,
-            -1.0f, -1.0f, 1.0f, 2.0f / 3.0f, 1.0f / 3.0f, -1.0f, 0.0f, 0.0f,
-            -1.0f, 1.0f, 1.0f, 2.0f / 3.0f, 2.0f / 3.0f, -1.0f, 0.0f, 0.0f,
-            -1.0f, 1.0f, -1.0f, 1.0f / 3.0f, 2.0f / 3.0f, -1.0f, 0.0f, 0.0f,
-            // Back face (-z)
-            1.0f, -1.0f, -1.0f, 2.0f / 3.0f, 1.0f / 3.0f, 0.0f, 0.0f, -1.0f,
-            -1.0f, -1.0f, -1.0f, 3.0f / 3.0f, 1.0f / 3.0f, 0.0f, 0.0f, -1.0f,
-            -1.0f, 1.0f, -1.0f, 3.0f / 3.0f, 2.0f / 3.0f, 0.0f, 0.0f, -1.0f,
-            1.0f, 1.0f, -1.0f, 2.0f / 3.0f, 2.0f / 3.0f, 0.0f, 0.0f, -1.0f
-        };
-
-        unsigned indices[] = {
-            0, 1, 2,
-            2, 3, 0,
-            4, 5, 6,
-            6, 7, 4,
-            8, 9, 10,
-            10, 11, 8,
-            12, 13, 14,
-            14, 15, 12,
-            16, 17, 18,
-            18, 19, 16,
-            20, 21, 22,
-            22, 23, 20
-        };
+        Loader::ObjLoader obj("res/models/cube.obj");
+        std::vector<float> vertex = obj.GetVertexData();
+        float* vertices = vertex.data();
 
         Renderer::Renderer renderer;
 
-        Renderer::VertexBuffer vb(vertices, sizeof(vertices));
-        Renderer::IndexBuffer ib(indices, sizeof(indices) / sizeof(indices[0]));
+        Renderer::VertexBuffer vb(vertices, vertex.size() * sizeof(float));
         
         Renderer::VertexArray va;
         Renderer::VertexBufferLayout layout;
@@ -139,7 +94,7 @@ int main() {
         Shader::Shader shader("res/Basic.glsl");
         shader.Bind();
 
-        Renderer::Texture texture("res/textures/texture.png");
+        Renderer::Texture texture("res/models/uvmap.png");
         texture.Bind();
         shader.SetUniform1i("u_Texture", 0);
 
@@ -271,7 +226,7 @@ int main() {
             shader.SetUniformMat4f("u_Projection", proj);
             shader.SetUniform3fv("u_CameraPos", camera.GetPosition());
 
-            shader.SetUniform3fv("u_albedoColor", albedoColor);
+            shader.SetUniform3fv("u_AlbedoColor", albedoColor);
 
             shader.SetUniform3fv("u_AmbientColor", ambientColor);
             shader.SetUniform3fv("u_LightColor", lightColor);
@@ -281,7 +236,7 @@ int main() {
             shader.SetUniform1f("u_LightIntensity", lightIntensity);
             shader.SetUniform1f("u_SpecularIntensity", specularIntensity);
 
-            renderer.Draw(va, ib, shader);
+            renderer.Draw(va, shader, obj.vertices.size());
 
             // Render ImGui
             ImGui::Render();

@@ -33,7 +33,7 @@ in vec3 v_Normals;
 
 uniform vec3 u_CameraPos;
 uniform sampler2D u_Texture;
-uniform vec3 u_albedoColor;
+uniform vec3 u_AlbedoColor;
 uniform vec3 u_LightPos;
 uniform vec3 u_LightColor;
 uniform vec3 u_AmbientColor;
@@ -58,7 +58,7 @@ void main() {
     vec3 specularLight = u_SpecularIntensity * specular * u_SpecularColor;
 
     vec4 texColor = texture(u_Texture, v_TexCoord);
-    color = texColor * vec4(u_albedoColor, 1.0f) *
+    color = texColor * vec4(u_AlbedoColor, 1.0f) *
         (vec4(ambientLight, 1.0f) + vec4(diffuseLight, 1.0f) + vec4(specularLight, 1.0f));
 }
 
